@@ -21,3 +21,20 @@ export function verifyProgressClaim(input: VerifyProgressInput): VerificationRes
   if (evidenceState === 'verified') return { state: 'verified', reasons: ['Observed evidence supports the claim.'] };
   return { state: 'unknown', reasons: ['No sufficient evidence is currently available.'] };
 }
+
+const STATUS_TERMS = /\b(pass(?:ed|es)?|success(?:ful|fully)?|deployed|applied|merged|fixed|complete(?:d)?|ready|fail(?:ed|ure)?|blocked|green|red)\b/i;
+
+export function extractReportedClaims(sourceText: string): ProgressClaim[] {
+  const statements = sourceText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => /^[-*]\s+\S/.test(line))
+    .map((line) => line.replace(/^[-*]\s+/, '').trim())
+    .filter((line) => STATUS_TERMS.test(line));
+
+  return statements.map((statement, index) => ({
+    id: `reported-${index + 1}`,
+    statement,
+    reportedState: 'reported' as const
+  }));
+}
