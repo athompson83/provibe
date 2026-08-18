@@ -1,0 +1,1 @@
+{"schema_version":"1.0","prompt_type":"constitution","project_revision":"{{project_revision}}","target_tool":"{{target_tool}}","mission":"{{mission}}","product_invariants":"{{product_invariants}}","architecture_rules":"{{architecture_rules}}","security_rules":"{{security_rules}}","verification_gates":"{{verification_gates}}","stop_conditions":"{{stop_conditions}}"}

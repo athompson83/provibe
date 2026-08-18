@@ -1,0 +1,10 @@
+import Link from 'next/link';
+import { createServerSupabaseClient } from '../../../../../lib/supabase/server';
+import { selectVercelProject } from './actions';
+
+export default async function VercelIntegrationPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = await params;
+  const supabase = await createServerSupabaseClient();
+  const { data: resources } = await supabase.from('provider_resources').select('id,display_name,metadata,selected').eq('project_id',projectId).eq('provider','vercel').eq('resource_type','project').order('display_name');
+  return <main style={{minHeight:'100vh',background:'#f5f7f8',padding:'48px 24px'}}><section style={{maxWidth:760,margin:'0 auto'}}><Link href={`/projects/${projectId}`} style={{color:'#667085'}}>← Project</Link><h1 style={{fontSize:38,letterSpacing:'-.04em'}}>Vercel project</h1><p style={{color:'#667085',lineHeight:1.6}}>Choose the deployment project ProVibe should reconcile against the selected GitHub repository. OAuth credentials are encrypted in Supabase Vault.</p>{resources?.length ? <div style={{display:'grid',gap:10,marginTop:28}}>{resources.map((resource) => <form key={resource.id} action={selectVercelProject.bind(null,projectId,resource.id)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'white',padding:18,border:'1px solid #e3e8eb',borderRadius:14}}><div><strong>{resource.display_name}</strong><div style={{fontSize:13,color:'#667085',marginTop:4}}>{resource.selected?'Selected deployment project':'Available through Vercel integration'}</div></div><button type="submit" disabled={resource.selected} style={{border:0,borderRadius:10,padding:'10px 14px',background:resource.selected?'#e8efdf':'#111827',color:resource.selected?'#35531a':'white',fontWeight:700}}>{resource.selected?'Selected':'Use project'}</button></form>)}</div>:<div style={{background:'white',border:'1px solid #e3e8eb',borderRadius:16,padding:24,marginTop:28}}><p>No Vercel resources are connected yet.</p><Link href={`/api/integrations/vercel/install?projectId=${encodeURIComponent(projectId)}`}>Connect Vercel</Link></div>}</section></main>;
+}

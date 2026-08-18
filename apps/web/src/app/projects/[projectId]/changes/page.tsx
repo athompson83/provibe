@@ -1,0 +1,3 @@
+import { changes } from '../../../../lib/demo-data';
+import { StatusBadge } from '../../../../components/status-badge';
+export default function ChangesPage(){return <><section className="page-heading"><div><span className="eyebrow">Change translator</span><h1>Translate commits into product impact.</h1><p>Every material change should tell the owner what moved, what it touches, and whether the result is actually verified.</p></div></section><section className="change-list">{changes.map(change=><article key={change.title}><div><StatusBadge state={change.state}/><span className="eyebrow">{change.impact}</span></div><h2>{change.title}</h2><p>{change.summary}</p><button className="button button-quiet">View evidence</button></article>)}</section></>;}

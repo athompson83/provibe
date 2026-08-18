@@ -1,0 +1,41 @@
+{
+  "role": "Principal product engineer and technical lead",
+  "objective": "Implement the phased MVP of an independent technical chief-of-staff/control-center for AI-built software, combining canonical project state, Blueprint Studio, connected GitHub/Vercel/Supabase intelligence, evidence-backed agent-progress verification, and JSON prompt adapters without becoming an autonomous coding/deployment platform.",
+  "required_reading": ["README.md","AGENTS.md","docs/01_PRD_MVP.md","docs/15_CANONICAL_PROJECT_MODEL.md","docs/16_BLUEPRINT_STUDIO.md","docs/17_BUILD_CONTROL_CENTER.md","docs/18_PROMPT_ADAPTER_SYSTEM.md","docs/19_PROGRESS_VERIFICATION.md","docs/04_SYSTEM_ARCHITECTURE.md","docs/05_DATA_MODEL.md","docs/08_SECURITY_PRIVACY.md","docs/10_REPO_STRUCTURE_ENGINEERING.md","docs/11_TEST_OBSERVABILITY.md","docs/12_ROADMAP_BACKLOG.md"],
+  "product_invariants": [
+    "Canonical structured project state is authoritative for planned state; generated Markdown is not.",
+    "Provider/deterministic evidence is authoritative for observed technical state.",
+    "Agent reports are untrusted claims until evaluated against evidence.",
+    "AI inference must never be silently promoted to verified truth.",
+    "All user-facing prompts are valid JSON and tied to a project revision.",
+    "MVP integrations are read-only and cannot automatically edit code, merge, deploy, mutate environments, execute migrations, or write production data.",
+    "Credentials, secret values, and production database rows must never enter model context or generated prompts."
+  ],
+  "phases": [
+    {"phase":"1-foundation","goal":"Secure tenancy, canonical project model, evidence primitives, design system, jobs, schemas."},
+    {"phase":"2-blueprint","goal":"Adaptive interview, artifact renderer, design reference intake, screen specs, JSON prompt adapters."},
+    {"phase":"3-connected-oversight","goal":"GitHub/Vercel integration, progress verifier, Build Cockpit, Decision Center, next/handoff/recovery prompts."},
+    {"phase":"4-code-intelligence","goal":"TypeScript/Next.js deterministic analyzer and grounded code explorer."},
+    {"phase":"5-data-intelligence","goal":"Supabase metadata/advisor integration and code-to-database reconciliation."},
+    {"phase":"6-integrated-control-center","goal":"Map, Risks, Ask, readiness, ETA recalibration, billing, deletion, beta gates."}
+  ],
+  "current_foundation_status": {
+    "implemented": ["monorepo scaffold","product shell","canonical revision primitive","evidence/progress verifier primitives","read-only provider interfaces","Supabase tenant/evidence schema and RLS","CI"],
+    "not_live": ["provider OAuth","repository ingestion","AST graph","model-backed explanations","billing","production Supabase binding"]
+  },
+  "next_task": {
+    "goal": "Implement Supabase Auth plus durable canonical project persistence as the next vertical slice.",
+    "acceptance_criteria": [
+      "Users can sign in and create a workspace.",
+      "Workspace membership is enforced by RLS and server authorization.",
+      "Projects can persist canonical revision 1 and append a revision after an accepted decision.",
+      "Cross-tenant reads/writes fail in negative tests.",
+      "No provider credentials or production data are introduced."
+    ],
+    "stop_conditions": [
+      "Stop before adding provider write permissions.",
+      "Stop if a proposed shortcut weakens tenant isolation.",
+      "Stop before placing service-role credentials in browser-visible code."
+    ]
+  }
+}
