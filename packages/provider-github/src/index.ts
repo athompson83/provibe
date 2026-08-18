@@ -11,16 +11,8 @@ export interface SourceProvider {
   getChangedFiles(repository: RepositoryRef, base: string, head: string): Promise<ChangedFile[]>;
 }
 
-export interface GitHubInstallationUrlInput {
-  appSlug: string;
-  state: string;
-}
-
-export interface GitHubUserAuthorizationUrlInput {
-  clientId: string;
-  state: string;
-}
-
+export interface GitHubInstallationUrlInput { appSlug: string; state: string; }
+export interface GitHubUserAuthorizationUrlInput { clientId: string; state: string; }
 export interface IntegrationState {
   userId: string;
   workspaceId: string;
@@ -28,7 +20,6 @@ export interface IntegrationState {
   installationId?: string;
   expiresAt: number;
 }
-
 export interface NormalizedGitHubEvidence {
   installationId: string;
   kind: string;
@@ -54,8 +45,15 @@ interface WorkflowRunPayload {
   };
 }
 
+const SHA256_HEX = /^[0-9a-f]{64}$/i;
+
 function stateMac(payload: string, secret: string): string {
   return createHmac('sha256', secret).update(payload, 'utf8').digest('hex');
+}
+
+function safeEqualHex(supplied: string, expected: string): boolean {
+  if (!SHA256_HEX.test(supplied) || !SHA256_HEX.test(expected)) return false;
+  return timingSafeEqual(Buffer.from(supplied, 'hex'), Buffer.from(expected, 'hex'));
 }
 
 export function signIntegrationState(state: IntegrationState, secret: string): string {
@@ -68,10 +66,7 @@ export function verifyIntegrationState(token: string, secret: string, nowEpochSe
   if (!secret) return null;
   const [payload, suppliedMac, extra] = token.split('.');
   if (!payload || !suppliedMac || extra) return null;
-  const expectedMac = stateMac(payload, secret);
-  const suppliedBuffer = Buffer.from(suppliedMac, 'hex');
-  const expectedBuffer = Buffer.from(expectedMac, 'hex');
-  if (suppliedBuffer.length !== expectedBuffer.length || !timingSafeEqual(suppliedBuffer, expectedBuffer)) return null;
+  if (!safeEqualHex(suppliedMac, stateMac(payload, secret))) return null;
 
   try {
     const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Partial<IntegrationState>;
@@ -105,9 +100,7 @@ export function verifyGitHubWebhookSignature(rawBody: string, signature: string 
   if (!signature?.startsWith('sha256=') || secret.length === 0) return false;
   const supplied = signature.slice('sha256='.length);
   const expected = createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
-  const suppliedBuffer = Buffer.from(supplied, 'hex');
-  const expectedBuffer = Buffer.from(expected, 'hex');
-  return suppliedBuffer.length === expectedBuffer.length && timingSafeEqual(suppliedBuffer, expectedBuffer);
+  return safeEqualHex(supplied, expected);
 }
 
 export function normalizeGitHubWebhook(eventName: string, rawPayload: unknown): NormalizedGitHubEvidence {
@@ -118,26 +111,14 @@ export function normalizeGitHubWebhook(eventName: string, rawPayload: unknown): 
   if (!run?.id || !run.head_sha || !installationId) throw new Error('GitHub workflow_run payload is missing required evidence fields.');
 
   const conclusion = run.conclusion ?? 'unknown';
-  const polarity: NormalizedGitHubEvidence['polarity'] =
-    run.status !== 'completed' ? 'neutral' : conclusion === 'success' ? 'supports' : 'contradicts';
-
+  const polarity: NormalizedGitHubEvidence['polarity'] = run.status !== 'completed' ? 'neutral' : conclusion === 'success' ? 'supports' : 'contradicts';
   return {
     installationId: String(installationId),
     kind: 'github.workflow_run',
     subject: `ci:${run.head_sha}`,
     polarity,
-    pointer: {
-      repository: payload.repository?.full_name ?? null,
-      workflowRunId: String(run.id),
-      url: run.html_url ?? null
-    },
-    payload: {
-      action: payload.action ?? null,
-      workflow: run.name ?? null,
-      status: run.status ?? null,
-      conclusion,
-      commitSha: run.head_sha
-    },
+    pointer: { repository: payload.repository?.full_name ?? null, workflowRunId: String(run.id), url: run.html_url ?? null },
+    payload: { action: payload.action ?? null, workflow: run.name ?? null, status: run.status ?? null, conclusion, commitSha: run.head_sha },
     observedAt: run.updated_at ?? new Date().toISOString()
   };
 }
