@@ -47,32 +47,48 @@ Date: 2026-08-18
 - RLS enabled for every tenant-scoped foundation table.
 - Admin/member helper functions.
 - No plaintext OAuth token/service-role columns.
-- Disposable-Postgres CI replay definition.
+- Disposable-Postgres CI replay.
 
 ### Engineering
-- pnpm/Turborepo workspace.
+- pnpm/Turborepo workspace plus npm workspace metadata for Git deployment compatibility.
 - Strict TypeScript configuration.
 - CI workflow.
 - JSON validation script.
 - committed-secret heuristic gate.
 - 13 dependency-light deterministic domain tests.
+- core product/architecture/security/SEO/legal documentation.
+- generated-project Markdown and JSON prompt template library.
 
-## Verified locally in this runtime
+## Verified on GitHub
 
-- 13/13 domain tests pass using Node's TypeScript type stripping.
-- All implemented non-Next TypeScript package sources typecheck with the available TypeScript compiler.
-- JSON validation passes.
-- committed-secret heuristic passes.
+GitHub CI run #3 on commit `0e467fd3aeb3130ed903f9af78645bea40b31e14` completed successfully.
 
-## Not locally executable in this runtime
+Verified gates:
+- dependency installation,
+- JSON validation,
+- committed-secret heuristic,
+- deterministic domain tests,
+- TypeScript typecheck,
+- full Next.js production build,
+- disposable PostgreSQL 16 migration replay,
+- foundation RLS assertions.
 
-The current runtime does not include `gh`, `psql`, or installed Next.js dependencies. Therefore:
+The prior database-only run also completed its PostgreSQL/RLS job successfully.
 
-- the Next.js production build is delegated to GitHub CI after publication,
-- the PostgreSQL 16 migration/RLS replay is delegated to GitHub CI,
-- GitHub publication uses the connected GitHub application rather than `gh`.
+## Current external deployment blocker
 
-These are verification boundaries, not claims that the checks passed.
+The connected Vercel project was auto-created while the repository contained only an initial README, so its project framework remains `null` / generic static. The repository now builds successfully as Next.js in GitHub CI, but Vercel Git previews fail after the build because the project expects a `public` static output directory.
+
+Correct Vercel project settings:
+- Framework Preset: **Next.js**
+- Root Directory: **`apps/web`**
+- Node.js: **24.x**
+
+Do not add a fake `public` directory or convert the app to static output just to satisfy the incorrect project preset. See `docs/27_VERCEL_DEPLOYMENT.md`.
+
+## Not yet live
+
+Provider OAuth, repository ingestion, AST indexing, production Supabase application connection, durable job queue, authentication UI, billing, and model-backed grounded explanations.
 
 ## Next implementation slice
 

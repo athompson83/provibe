@@ -27,5 +27,6 @@
 - 24 Incorporation Summary
 - 25 Compatibility Registry
 - 26 Implementation Status
+- 27 Vercel Deployment Configuration
 
 Architecture decisions live in `docs/adr/`. Execution plans live in `docs/superpowers/plans/`.
