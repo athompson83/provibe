@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Screen Specification",
+  "type": "object",
+  "required": ["screen_id", "name", "primary_objective", "key_components", "states", "project_revision"],
+  "properties": {
+    "screen_id":{"type":"string"}, "name":{"type":"string"}, "primary_objective":{"type":"string"},
+    "route":{"type":["string","null"]}, "navigation_context":{"type":"array","items":{"type":"string"}},
+    "primary_cta":{"type":["string","null"]}, "secondary_actions":{"type":"array","items":{"type":"string"}},
+    "data_dependencies":{"type":"array","items":{"type":"string"}}, "key_components":{"type":"array","items":{"type":"object"}},
+    "states":{"type":"object","required":["loading","empty","error","unauthorized","partial_data","success"]},
+    "responsive":{"type":"object"}, "accessibility":{"type":"object"},
+    "evidence_status_usage":{"type":"array","items":{"type":"string"}},
+    "design_tokens_revision":{"type":["string","null"]}, "project_revision":{"type":"integer","minimum":1}
+  },
+  "additionalProperties": true
+}

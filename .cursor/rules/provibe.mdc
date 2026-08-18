@@ -1,0 +1,17 @@
+---
+description: ProVibe project constitution and trust boundaries
+alwaysApply: true
+---
+
+Read `AGENTS.md` before implementation.
+
+Preserve these invariants:
+- canonical structured project state is primary; Markdown is rendered output;
+- deterministic/provider evidence outranks reports and inference;
+- unknown remains unknown;
+- MVP provider access is read-only;
+- customer repository code is never executed during normal analysis;
+- secrets never enter prompts, logs, or client bundles;
+- every verified material claim has evidence;
+- Next.js web and analyzer-worker remain separate trust boundaries;
+- prompts generated for users are valid JSON.

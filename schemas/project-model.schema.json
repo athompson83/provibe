@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Canonical Project Model",
+  "type": "object",
+  "required": ["project", "revision", "product", "scope"],
+  "properties": {
+    "project": {"type":"object","required":["id","name","stage"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"stage":{"enum":["idea","planning","building","beta_prep","beta","production_prep","production","paused","blocked"]}},"additionalProperties":true},
+    "revision": {"type":"integer","minimum":1},
+    "product": {"type":"object"},
+    "scope": {"type":"object"},
+    "users": {"type":"array","items":{"type":"object"}},
+    "workflows": {"type":"array","items":{"type":"object"}},
+    "entities": {"type":"array","items":{"type":"object"}},
+    "integrations": {"type":"array","items":{"type":"object"}},
+    "architecture_decisions": {"type":"array","items":{"type":"object"}},
+    "design": {"type":"object"},
+    "screens": {"type":"array","items":{"type":"object"}},
+    "requirements": {"type":"array","items":{"type":"object"}},
+    "tasks": {"type":"array","items":{"type":"object"}},
+    "risks": {"type":"array","items":{"type":"object"}},
+    "decisions": {"type":"array","items":{"type":"object"}},
+    "open_questions": {"type":"array","items":{"type":"object"}},
+    "evidence": {"type":"array","items":{"type":"object"}},
+    "observed_state": {"type":"object"},
+    "artifacts": {"type":"array","items":{"type":"object"}},
+    "prompts": {"type":"array","items":{"type":"object"}},
+    "estimates": {"type":"array","items":{"type":"object"}},
+    "readiness": {"type":"object"}
+  },
+  "additionalProperties": false
+}

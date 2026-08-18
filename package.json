@@ -1,0 +1,24 @@
+{
+  "name": "provibe",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "engines": {
+    "node": ">=24 <27"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "node --experimental-strip-types --test packages/**/src/*.test.ts",
+    "test:domain": "node --experimental-strip-types --test packages/**/src/*.test.ts",
+    "typecheck": "turbo run typecheck",
+    "verify:json": "node scripts/verify-json.mjs",
+    "verify": "pnpm verify:json && pnpm test:domain && pnpm typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0"
+  }
+}
