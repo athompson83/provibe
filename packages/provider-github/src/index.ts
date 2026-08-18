@@ -12,7 +12,7 @@ export interface SourceProvider {
 }
 
 export interface GitHubInstallationUrlInput { appSlug: string; state: string; }
-export interface GitHubUserAuthorizationUrlInput { clientId: string; state: string; }
+export interface GitHubUserAuthorizationUrlInput { clientId: string; state: string; redirectUri?: string; codeChallenge?: string; }
 export interface IntegrationState {
   userId: string;
   workspaceId: string;
@@ -46,11 +46,7 @@ interface WorkflowRunPayload {
 }
 
 const SHA256_HEX = /^[0-9a-f]{64}$/i;
-
-function stateMac(payload: string, secret: string): string {
-  return createHmac('sha256', secret).update(payload, 'utf8').digest('hex');
-}
-
+function stateMac(payload: string, secret: string): string { return createHmac('sha256', secret).update(payload, 'utf8').digest('hex'); }
 function safeEqualHex(supplied: string, expected: string): boolean {
   if (!SHA256_HEX.test(supplied) || !SHA256_HEX.test(expected)) return false;
   return timingSafeEqual(Buffer.from(supplied, 'hex'), Buffer.from(expected, 'hex'));
@@ -65,42 +61,29 @@ export function signIntegrationState(state: IntegrationState, secret: string): s
 export function verifyIntegrationState(token: string, secret: string, nowEpochSeconds = Math.floor(Date.now() / 1000)): IntegrationState | null {
   if (!secret) return null;
   const [payload, suppliedMac, extra] = token.split('.');
-  if (!payload || !suppliedMac || extra) return null;
-  if (!safeEqualHex(suppliedMac, stateMac(payload, secret))) return null;
-
+  if (!payload || !suppliedMac || extra || !safeEqualHex(suppliedMac, stateMac(payload, secret))) return null;
   try {
     const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Partial<IntegrationState>;
     if (typeof parsed.userId !== 'string' || typeof parsed.workspaceId !== 'string' || typeof parsed.projectId !== 'string' || typeof parsed.expiresAt !== 'number') return null;
-    if (parsed.expiresAt <= nowEpochSeconds) return null;
-    if (parsed.installationId !== undefined && typeof parsed.installationId !== 'string') return null;
-    return {
-      userId: parsed.userId,
-      workspaceId: parsed.workspaceId,
-      projectId: parsed.projectId,
-      ...(parsed.installationId === undefined ? {} : { installationId: parsed.installationId }),
-      expiresAt: parsed.expiresAt
-    };
-  } catch {
-    return null;
-  }
+    if (parsed.expiresAt <= nowEpochSeconds || (parsed.installationId !== undefined && typeof parsed.installationId !== 'string')) return null;
+    return { userId: parsed.userId, workspaceId: parsed.workspaceId, projectId: parsed.projectId, ...(parsed.installationId === undefined ? {} : { installationId: parsed.installationId }), expiresAt: parsed.expiresAt };
+  } catch { return null; }
 }
 
 export function buildInstallationUrl(input: GitHubInstallationUrlInput): string {
-  const slug = encodeURIComponent(input.appSlug);
-  const state = encodeURIComponent(input.state);
-  return `https://github.com/apps/${slug}/installations/new?state=${state}`;
+  return `https://github.com/apps/${encodeURIComponent(input.appSlug)}/installations/new?state=${encodeURIComponent(input.state)}`;
 }
 
 export function buildGitHubUserAuthorizationUrl(input: GitHubUserAuthorizationUrlInput): string {
   const params = new URLSearchParams({ client_id: input.clientId, state: input.state });
+  if (input.redirectUri) params.set('redirect_uri', input.redirectUri);
+  if (input.codeChallenge) { params.set('code_challenge', input.codeChallenge); params.set('code_challenge_method', 'S256'); }
   return `https://github.com/login/oauth/authorize?${params.toString()}`;
 }
 
 export function verifyGitHubWebhookSignature(rawBody: string, signature: string | null, secret: string): boolean {
   if (!signature?.startsWith('sha256=') || secret.length === 0) return false;
-  const supplied = signature.slice('sha256='.length);
-  const expected = createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
-  return safeEqualHex(supplied, expected);
+  return safeEqualHex(signature.slice('sha256='.length), createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex'));
 }
 
 export function normalizeGitHubWebhook(eventName: string, rawPayload: unknown): NormalizedGitHubEvidence {
@@ -109,14 +92,10 @@ export function normalizeGitHubWebhook(eventName: string, rawPayload: unknown): 
   const run = payload.workflow_run;
   const installationId = payload.installation?.id;
   if (!run?.id || !run.head_sha || !installationId) throw new Error('GitHub workflow_run payload is missing required evidence fields.');
-
   const conclusion = run.conclusion ?? 'unknown';
   const polarity: NormalizedGitHubEvidence['polarity'] = run.status !== 'completed' ? 'neutral' : conclusion === 'success' ? 'supports' : 'contradicts';
   return {
-    installationId: String(installationId),
-    kind: 'github.workflow_run',
-    subject: `ci:${run.head_sha}`,
-    polarity,
+    installationId: String(installationId), kind: 'github.workflow_run', subject: `ci:${run.head_sha}`, polarity,
     pointer: { repository: payload.repository?.full_name ?? null, workflowRunId: String(run.id), url: run.html_url ?? null },
     payload: { action: payload.action ?? null, workflow: run.name ?? null, status: run.status ?? null, conclusion, commitSha: run.head_sha },
     observedAt: run.updated_at ?? new Date().toISOString()
