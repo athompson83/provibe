@@ -27,8 +27,10 @@ export async function signUp(formData: FormData) {
 
   const supabase = await createServerSupabaseClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
-  const options = siteUrl ? { emailRedirectTo: `${siteUrl}/auth/callback` } : undefined;
-  const { data, error } = await supabase.auth.signUp({ email: input.email, password: input.password, options });
+  const signUpInput = siteUrl
+    ? { email: input.email, password: input.password, options: { emailRedirectTo: `${siteUrl}/auth/callback` } }
+    : { email: input.email, password: input.password };
+  const { data, error } = await supabase.auth.signUp(signUpInput);
   if (error) redirect(`/auth/sign-up?error=${encodeURIComponent(error.message)}`);
   if (data.session) redirect('/projects');
   redirect('/auth/sign-in?message=Check%20your%20email%20to%20confirm%20your%20account.');
