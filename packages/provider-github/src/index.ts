@@ -16,6 +16,19 @@ export interface GitHubInstallationUrlInput {
   state: string;
 }
 
+export interface GitHubUserAuthorizationUrlInput {
+  clientId: string;
+  state: string;
+}
+
+export interface IntegrationState {
+  userId: string;
+  workspaceId: string;
+  projectId: string;
+  installationId?: string;
+  expiresAt: number;
+}
+
 export interface NormalizedGitHubEvidence {
   installationId: string;
   kind: string;
@@ -41,10 +54,51 @@ interface WorkflowRunPayload {
   };
 }
 
+function stateMac(payload: string, secret: string): string {
+  return createHmac('sha256', secret).update(payload, 'utf8').digest('hex');
+}
+
+export function signIntegrationState(state: IntegrationState, secret: string): string {
+  if (!secret) throw new Error('Integration state secret is required.');
+  const payload = Buffer.from(JSON.stringify(state), 'utf8').toString('base64url');
+  return `${payload}.${stateMac(payload, secret)}`;
+}
+
+export function verifyIntegrationState(token: string, secret: string, nowEpochSeconds = Math.floor(Date.now() / 1000)): IntegrationState | null {
+  if (!secret) return null;
+  const [payload, suppliedMac, extra] = token.split('.');
+  if (!payload || !suppliedMac || extra) return null;
+  const expectedMac = stateMac(payload, secret);
+  const suppliedBuffer = Buffer.from(suppliedMac, 'hex');
+  const expectedBuffer = Buffer.from(expectedMac, 'hex');
+  if (suppliedBuffer.length !== expectedBuffer.length || !timingSafeEqual(suppliedBuffer, expectedBuffer)) return null;
+
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Partial<IntegrationState>;
+    if (typeof parsed.userId !== 'string' || typeof parsed.workspaceId !== 'string' || typeof parsed.projectId !== 'string' || typeof parsed.expiresAt !== 'number') return null;
+    if (parsed.expiresAt <= nowEpochSeconds) return null;
+    if (parsed.installationId !== undefined && typeof parsed.installationId !== 'string') return null;
+    return {
+      userId: parsed.userId,
+      workspaceId: parsed.workspaceId,
+      projectId: parsed.projectId,
+      ...(parsed.installationId === undefined ? {} : { installationId: parsed.installationId }),
+      expiresAt: parsed.expiresAt
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function buildInstallationUrl(input: GitHubInstallationUrlInput): string {
   const slug = encodeURIComponent(input.appSlug);
   const state = encodeURIComponent(input.state);
   return `https://github.com/apps/${slug}/installations/new?state=${state}`;
+}
+
+export function buildGitHubUserAuthorizationUrl(input: GitHubUserAuthorizationUrlInput): string {
+  const params = new URLSearchParams({ client_id: input.clientId, state: input.state });
+  return `https://github.com/login/oauth/authorize?${params.toString()}`;
 }
 
 export function verifyGitHubWebhookSignature(rawBody: string, signature: string | null, secret: string): boolean {
